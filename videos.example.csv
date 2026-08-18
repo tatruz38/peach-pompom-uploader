@@ -1,0 +1,3 @@
+file,title,description,tags,category,privacy,publish_at,playlist,thumbnail,made_for_kids
+clip1.mkv,First video,Description here,"live,concert",10,private,,My Playlist,,false
+clip2.mp4,Second video,Another description,"vlog,daily",22,unlisted,2026-09-01T12:00:00Z,,thumb2.jpg,false

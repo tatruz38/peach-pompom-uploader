@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Peach Pompom Uploader</title>
+<style>
+:root{
+  --bg:#ffffff; --panel:#f7f7f8; --line:#e3e3e6; --text:#16161a; --muted:#6b6b74;
+  --accent:#c2185b; --accent-weak:#fce4ec; --ok:#1b7f4b; --warn:#b26a00; --err:#c0392b;
+  --radius:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#141416; --panel:#1c1c20; --line:#2c2c33; --text:#ececf0; --muted:#9a9aa4;
+         --accent:#ff6f9d; --accent-weak:#38222c; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--line)}
+h1{font-size:17px;margin:0;font-weight:650;letter-spacing:-.2px}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--panel);
+  border:1px solid var(--line);color:var(--muted)}
+.pill.live{background:var(--accent-weak);border-color:transparent;color:var(--accent);font-weight:600}
+main{max-width:1120px;margin:0 auto;padding:22px 24px 60px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;margin-bottom:18px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+  margin:0 0 12px;font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:10px}
+input[type=text],select{background:var(--bg);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:8px 11px;font:inherit;font-size:14px}
+input[type=text]{flex:1;min-width:260px}
+input[type=number]{width:80px;background:var(--bg);color:var(--text);border:1px solid var(--line);
+  border-radius:8px;padding:8px 11px;font:inherit;font-size:14px}
+button{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;
+  padding:8px 15px;font:inherit;font-size:14px;font-weight:520;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--muted)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover:not(:disabled){filter:brightness(1.08)}
+label{font-size:13px;color:var(--muted)}
+.counts{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:4px}
+.count b{font-size:22px;font-weight:650;display:block;line-height:1.2}
+.count span{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--muted);font-weight:600;padding:0 10px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.active{background:var(--accent-weak)}
+.name{max-width:430px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{font-size:12px;color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:999px;overflow:hidden;min-width:110px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s}
+.st{font-size:12px;font-weight:600}
+.st.done{color:var(--ok)} .st.failed{color:var(--err)}
+.st.uploading{color:var(--accent)} .st.pending{color:var(--muted)}
+#log{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;
+  height:190px;overflow:auto;font:12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;
+  white-space:pre-wrap}
+#log .t{color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;padding:14px 2px}
+a{color:var(--accent)}
+.notice{font-size:13px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Peach Pompom Uploader</h1>
+  <span class="pill" id="authPill">checking…</span>
+  <span class="pill" id="runPill">idle</span>
+</header>
+
+<main>
+  <section>
+    <h2>Load a queue</h2>
+    <div class="row">
+      <input type="text" id="csvPath" placeholder="/Users/you/Documents/yt-uploader/peachpompom.csv">
+      <button id="loadCsv">Load CSV</button>
+    </div>
+    <div class="row">
+      <input type="text" id="folderPath" placeholder="…or a folder of video files">
+      <button id="loadFolder">Load folder</button>
+    </div>
+    <div class="notice">Files already recorded in <code>uploaded.json</code> are marked done and skipped.</div>
+  </section>
+
+  <section>
+    <h2>Options</h2>
+    <div class="row">
+      <label for="privacy">Privacy</label>
+      <select id="privacy">
+        <option value="private" selected>Private</option>
+        <option value="unlisted">Unlisted</option>
+        <option value="public">Public</option>
+      </select>
+      <label for="category">Category</label>
+      <select id="category">
+        <option value="10" selected>Music</option>
+        <option value="22">People &amp; Blogs</option>
+        <option value="19">Travel</option>
+        <option value="24">Entertainment</option>
+        <option value="20">Gaming</option>
+        <option value="27">Education</option>
+      </select>
+      <button id="applySettings">Apply to pending</button>
+      <span style="flex:1"></span>
+      <label for="limit">Stop after</label>
+      <input type="number" id="limit" min="0" value="0">
+      <span class="sub">0 = no limit</span>
+    </div>
+    <div class="row">
+      <button class="primary" id="start">Start uploading</button>
+      <button id="stop" disabled>Stop</button>
+      <button id="verify">Verify uploads</button>
+      <button id="requeue">Verify &amp; requeue broken</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Queue</h2>
+    <div class="counts">
+      <div class="count"><b id="cTotal">0</b><span>total</span></div>
+      <div class="count"><b id="cDone">0</b><span>done</span></div>
+      <div class="count"><b id="cPending">0</b><span>pending</span></div>
+      <div class="count"><b id="cFailed">0</b><span>failed</span></div>
+    </div>
+    <div id="tableWrap"><div class="empty">Nothing loaded yet.</div></div>
+  </section>
+
+  <section>
+    <h2>Activity</h2>
+    <div id="log"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let items = [];
+
+function esc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render(){
+  const wrap = $('#tableWrap');
+  if(!items.length){ wrap.innerHTML = '<div class="empty">Nothing loaded yet.</div>'; return; }
+  const rows = items.map((it,i) => {
+    const name = it.file.split('/').pop();
+    const link = it.video_id ? ` · <a href="https://youtu.be/${it.video_id}" target="_blank">watch</a>` : '';
+    return `<tr id="r${i}">
+      <td class="sub" style="width:44px">${i+1}</td>
+      <td><div class="name" title="${esc(it.file)}">${esc(it.title || name)}</div>
+          <div class="sub name">${esc(name)}${link}</div></td>
+      <td style="width:150px"><div class="bar"><i style="width:${it.progress}%"></i></div></td>
+      <td style="width:110px"><span class="st ${it.status}">${it.status}</span>
+          <div class="sub">${esc(it.message||'')}</div></td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table><thead><tr><th>#</th><th>Video</th><th>Progress</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+  counts();
+}
+
+function counts(){
+  const c = {done:0,pending:0,failed:0,uploading:0};
+  items.forEach(i => c[i.status] = (c[i.status]||0)+1);
+  $('#cTotal').textContent = items.length;
+  $('#cDone').textContent = c.done;
+  $('#cPending').textContent = c.pending + c.uploading;
+  $('#cFailed').textContent = c.failed;
+}
+
+function log(text, t){
+  const el = $('#log');
+  el.insertAdjacentHTML('beforeend', `<div><span class="t">${t||''}</span>  ${esc(text)}</div>`);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setRunning(on, why){
+  $('#runPill').textContent = on ? 'uploading' : (why || 'idle');
+  $('#runPill').className = 'pill' + (on ? ' live' : '');
+  $('#start').disabled = on; $('#stop').disabled = !on;
+}
+
+async function api(path, body){
+  const r = await fetch(path, body ? {method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)} : {});
+  const j = await r.json().catch(()=>({}));
+  if(j.error) log('error: ' + j.error, '');
+  return j;
+}
+
+function applyState(s){
+  if(s.items) { items = s.items; render(); }
+  setRunning(s.running, s.stopped_reason);
+  $('#authPill').textContent = s.authed ? 'signed in' : 'not signed in';
+}
+
+$('#loadCsv').onclick = async () => applyState(await api('/api/load-csv', {path: $('#csvPath').value.trim()}));
+$('#loadFolder').onclick = async () => applyState(await api('/api/load-folder', {path: $('#folderPath').value.trim()}));
+$('#applySettings').onclick = async () => applyState(await api('/api/settings',
+  {privacy: $('#privacy').value, category: $('#category').value}));
+$('#start').onclick = async () => { setRunning(true); await api('/api/start', {limit: Number($('#limit').value)||0}); };
+$('#stop').onclick = async () => api('/api/stop', {});
+$('#verify').onclick = async () => showVerify(await api('/api/verify', {}));
+$('#requeue').onclick = async () => showVerify(await api('/api/verify', {requeue:true}));
+
+function showVerify(r){
+  if(!r || !r.healthy) return;
+  log(`verify: ${r.healthy.length} healthy, ${r.broken.length} broken`, '');
+  r.broken.forEach(b => log(`  BAD  ${b.name} — ${b.why}`, ''));
+  if(r.broken.length) api('/api/state').then(applyState);
+}
+
+const es = new EventSource('/api/events');
+es.onmessage = ev => {
+  const m = JSON.parse(ev.data);
+  if(m.type === 'log') log(m.text, m.t);
+  else if(m.type === 'queue'){ items = m.items; render(); }
+  else if(m.type === 'item'){ items[m.index] = m.item; render();
+    const r = document.getElementById('r'+m.index); if(r) r.classList.toggle('active', m.item.status==='uploading'); }
+  else if(m.type === 'progress'){
+    if(items[m.index]) items[m.index].progress = m.progress;
+    const r = document.getElementById('r'+m.index);
+    if(r) r.querySelector('.bar i').style.width = m.progress + '%';
+  }
+  else if(m.type === 'auth') $('#authPill').textContent = 'signed in';
+  else if(m.type === 'state') applyState(m);
+};
+
+api('/api/state').then(applyState);
+</script>
+</body>
+</html>

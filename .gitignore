@@ -1,0 +1,25 @@
+# Secrets — never commit these
+client_secret*.json
+token.json
+*.pem
+
+# Local state and data
+uploaded.json
+uploaded.json.bak
+*.csv
+!videos.example.csv
+missing_files.txt
+audit-evidence/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Superseded v1 files kept locally for reference
+_superseded/
+
+# stray evidence PDFs
+privacy-policy-evidence.pdf
