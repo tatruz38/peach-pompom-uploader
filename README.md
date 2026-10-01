@@ -83,6 +83,34 @@ file,title,description,tags,category,privacy,publish_at,playlist,thumbnail,made_
 | `playlist` | Playlist ID, or a title — created private if it doesn't exist |
 | `thumbnail` | jpg/png. Requires a verified channel. |
 
+## Bulk-editing titles and descriptions
+
+Separate from uploading: `edit.py` pulls your channel into a spreadsheet, you
+edit it in Excel, and it applies the changes back.
+
+```bash
+python edit.py --export sheet.xlsx     # channel → spreadsheet
+#   edit the yellow columns in Excel; leave a cell blank to keep it as-is
+python edit.py --preview sheet.xlsx    # exact before/after diff, sends nothing
+python edit.py --apply sheet.xlsx      # apply, after a confirmation prompt
+```
+
+The export carries `video_id`, `url`, `file` and `current_title` for identity,
+blank columns for the new values, and the current description, tags, category
+and privacy alongside so you can see what you're changing from.
+
+Rows are matched by `video_id` → `url` → `file` (via `uploaded.json`) →
+`current_title`, whichever the sheet provides. A title that matches more than
+one video is reported, never guessed.
+
+Editable: `title`, `description`, `tags`, `category`, `privacy`, `publish_at`.
+Leave a cell blank and that field is left untouched — the tool reads each
+video's current snippet and overlays only what you filled in, so partial edits
+can't silently wipe tags or descriptions.
+
+An update costs 50 quota units against the default 10,000/day, so roughly 200
+edits per day — far cheaper than uploading.
+
 ## Quota, in practice
 
 An upload costs about **1,600 quota units**, against a default of 10,000 per day —
@@ -96,7 +124,9 @@ longer uploads.
 
 ```
 ytuploader/core.py   OAuth, remux, resumable upload, state, verification
-cli.py               command-line interface
+ytuploader/metadata.py  channel export, row matching, diffing, videos.update
+cli.py               command-line uploader
+edit.py              bulk metadata editor (spreadsheet in, updates out)
 server.py            local web server (stdlib only) with SSE progress
 web/index.html       the UI, single file
 ```

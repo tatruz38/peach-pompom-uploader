@@ -8,8 +8,13 @@ uploaded.json
 uploaded.json.bak
 *.csv
 !videos.example.csv
+*.xlsx
+*.xlsm
 missing_files.txt
 audit-evidence/
+
+# Playwright browser profile (contains your Google session)
+.studio-profile/
 
 # Python
 .venv/
@@ -21,5 +26,8 @@ __pycache__/
 # Superseded v1 files kept locally for reference
 _superseded/
 
-# stray evidence PDFs
-privacy-policy-evidence.pdf
+# Debug screenshots, backups, local state, evidence docs
+*.png
+*.bak
+*.pdf
+playlists_state.json
